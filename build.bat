@@ -8,6 +8,8 @@ python -m PyInstaller --noconfirm --clean --onefile --windowed ^
   --icon assets\icon.ico ^
   --add-data "assets\icon.ico;assets" ^
   --collect-data faster_whisper ^
+  --collect-data sv_ttk ^
+  --add-data "assets\icon.png;assets" ^
   --collect-binaries ctranslate2 ^
   --collect-all av ^
   --collect-all onnxruntime ^

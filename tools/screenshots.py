@@ -71,9 +71,10 @@ def grab(root, name):
 def main():
     os.makedirs(OUT, exist_ok=True)
     tmp = tempfile.mkdtemp()
+    gui.enable_dpi_awareness()
     root = tk.Tk()
     app = gui.App(root, history_path=os.path.join(tmp, "history.json"))
-    root.geometry("1040x700+40+40")
+    root.geometry(f"{app.px(1120)}x{app.px(740)}+40+40")
     pump(root)
     grab(root, "01_start.png")
 
@@ -100,7 +101,14 @@ def main():
     grab(root, "06_history.png")
 
     app.tabs.select(0)
-    root.geometry("820x560+40+40")
+    app.theme_var.set(True)
+    app.toggle_theme()
+    grab(root, "08_dark.png")
+    app.theme_var.set(False)
+    app.toggle_theme()
+
+    app.tabs.select(0)
+    root.geometry(f"{app.px(900)}x{app.px(600)}+40+40")
     pump(root)
     grab(root, "07_min_size.png")
 

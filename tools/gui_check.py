@@ -66,6 +66,7 @@ def last_msg():
 
 def main():
     tmp = tempfile.mkdtemp()
+    gui.enable_dpi_awareness()
     root = tk.Tk()
     app = gui.App(root, history_path=os.path.join(tmp, "history.json"))
     pump(root)
@@ -76,12 +77,12 @@ def main():
         y = widget.winfo_rooty() - root.winfo_rooty() + widget.winfo_height()
         return widget.winfo_ismapped() and x <= root.winfo_width() and y <= root.winfo_height()
 
-    for size in ("1040x700", "820x560"):
+    for size in (f"{app.px(1120)}x{app.px(740)}", f"{app.px(900)}x{app.px(600)}"):  # обычный и минимальный
         root.geometry(size)
         pump(root, 0.5)
         hidden = [w["text"] for w in (app.btn_run, app.btn_cancel, *app.export_buttons) if not visible(w)]
         check(f"Кнопки видны при размере {size}", not hidden, hidden)
-    root.geometry("1040x700")
+    root.geometry(f"{app.px(1120)}x{app.px(740)}")
 
     # 1. Начальное состояние
     check("Кнопки неактивны без файла", str(app.btn_run["state"]) == "disabled"
