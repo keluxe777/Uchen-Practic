@@ -51,8 +51,8 @@ class App:
 
         self._build_menu()
         self._build_toolbar()
+        self._build_bottom()  # нижнюю панель — до вкладок, иначе вкладки её вытесняют (дефект D-03)
         self._build_body()
-        self._build_bottom()
         self._bind_keys()
         self.refresh_all()
 
@@ -89,23 +89,24 @@ class App:
         self.btn_save = ttk.Button(bar, text="Сохранить проект", command=self.save_project)
         self.btn_save.pack(side="left", padx=(6, 0))
 
-        ttk.Separator(bar, orient="vertical").pack(side="left", fill="y", padx=12)
-        ttk.Label(bar, text="Модель:").pack(side="left")
+        # Вторая строка: настройки и запуск (в одну строку не помещалось — дефект D-02)
+        run_bar = ttk.Frame(self.root, padding=(10, 2, 10, 4))
+        run_bar.pack(fill="x")
+        ttk.Label(run_bar, text="Модель:").pack(side="left")
         self.model_var = tk.StringVar(value=MODELS["base"])
-        self.model_box = ttk.Combobox(bar, textvariable=self.model_var, values=list(MODELS.values()),
-                                      state="readonly", width=30)
+        self.model_box = ttk.Combobox(run_bar, textvariable=self.model_var, values=list(MODELS.values()),
+                                      state="readonly", width=34)
         self.model_box.pack(side="left", padx=(4, 10))
-        ttk.Label(bar, text="Язык:").pack(side="left")
+        ttk.Label(run_bar, text="Язык:").pack(side="left")
         self.lang_var = tk.StringVar(value=LANGUAGES["auto"])
-        self.lang_box = ttk.Combobox(bar, textvariable=self.lang_var, values=list(LANGUAGES.values()),
-                                     state="readonly", width=24)
-        self.lang_box.pack(side="left", padx=(4, 0))
-
-        self.btn_cancel = ttk.Button(bar, text="Отмена", command=self.cancel_transcription)
-        self.btn_cancel.pack(side="right")
-        self.btn_run = ttk.Button(bar, text="▶  Расшифровать", style="Accent.TButton",
+        self.lang_box = ttk.Combobox(run_bar, textvariable=self.lang_var, values=list(LANGUAGES.values()),
+                                     state="readonly", width=27)
+        self.lang_box.pack(side="left", padx=(4, 10))
+        self.btn_run = ttk.Button(run_bar, text="▶  Расшифровать", style="Accent.TButton",
                                   command=self.start_transcription)
-        self.btn_run.pack(side="right", padx=(0, 6))
+        self.btn_run.pack(side="left", padx=(4, 0))
+        self.btn_cancel = ttk.Button(run_bar, text="Отмена", command=self.cancel_transcription)
+        self.btn_cancel.pack(side="left", padx=(6, 0))
 
         info = ttk.Frame(self.root, padding=(10, 2, 10, 2))
         info.pack(fill="x")
@@ -133,15 +134,23 @@ class App:
         search.pack(fill="x", pady=(0, 6))
         ttk.Label(search, text="Найти:").pack(side="left")
         self.find_var = tk.StringVar()
-        self.find_entry = ttk.Entry(search, textvariable=self.find_var, width=22)
-        self.find_entry.pack(side="left", padx=(4, 8))
+        self.find_entry = ttk.Entry(search, textvariable=self.find_var, width=18)
+        self.find_entry.pack(side="left", padx=(4, 4))
+        ttk.Button(search, text="Найти", command=self.find).pack(side="left", padx=(0, 12))
         ttk.Label(search, text="Заменить на:").pack(side="left")
         self.replace_var = tk.StringVar()
-        ttk.Entry(search, textvariable=self.replace_var, width=22).pack(side="left", padx=(4, 8))
+        ttk.Entry(search, textvariable=self.replace_var, width=18).pack(side="left", padx=(4, 4))
+        ttk.Button(search, text="Заменить всё", command=self.replace_all).pack(side="left", padx=(0, 12))
         self.case_var = tk.BooleanVar(value=False)
         ttk.Checkbutton(search, text="Учитывать регистр", variable=self.case_var).pack(side="left")
-        ttk.Button(search, text="Заменить всё", command=self.replace_all).pack(side="right")
-        ttk.Button(search, text="Найти", command=self.find).pack(side="right", padx=(0, 6))
+
+        # Кнопки под таблицей пакуем раньше таблицы, чтобы они не обрезались (дефект D-04)
+        seg_buttons = ttk.Frame(seg_tab)
+        seg_buttons.pack(side="bottom", fill="x", pady=(6, 0))
+        ttk.Button(seg_buttons, text="Изменить фрагмент", command=self.edit_segment).pack(side="left")
+        ttk.Button(seg_buttons, text="Удалить фрагмент", command=self.delete_segments).pack(side="left", padx=6)
+        ttk.Label(seg_buttons, text="Двойной щелчок по строке — редактировать текст",
+                  foreground="#777").pack(side="left", padx=10)
 
         table = ttk.Frame(seg_tab)
         table.pack(fill="both", expand=True)
@@ -157,13 +166,6 @@ class App:
         self.tree.pack(side="left", fill="both", expand=True)
         scroll.pack(side="right", fill="y")
         self.tree.bind("<Double-1>", lambda e: self.edit_segment())
-
-        seg_buttons = ttk.Frame(seg_tab)
-        seg_buttons.pack(fill="x", pady=(6, 0))
-        ttk.Button(seg_buttons, text="Изменить фрагмент", command=self.edit_segment).pack(side="left")
-        ttk.Button(seg_buttons, text="Удалить фрагмент", command=self.delete_segments).pack(side="left", padx=6)
-        ttk.Label(seg_buttons, text="Двойной щелчок по строке — редактировать текст",
-                  foreground="#777").pack(side="left", padx=10)
 
         # --- вкладка «Текст»: сплошной текст для чтения и копирования
         text_tab = ttk.Frame(self.tabs, padding=8)
@@ -202,7 +204,7 @@ class App:
 
     def _build_bottom(self):
         bottom = ttk.Frame(self.root, padding=(10, 4, 10, 10))
-        bottom.pack(fill="x")
+        bottom.pack(side="bottom", fill="x")
         ttk.Label(bottom, text="Экспорт:").pack(side="left")
         self.export_buttons = []
         for label, kind in (("TXT", "txt"), ("SRT (субтитры)", "srt"), ("Word (DOCX)", "docx")):
@@ -213,12 +215,20 @@ class App:
         self.stats_label.pack(side="right")
 
     def _bind_keys(self):
-        self.root.bind("<Control-o>", lambda e: self.open_audio())
-        self.root.bind("<Control-p>", lambda e: self.open_project())
-        self.root.bind("<Control-s>", lambda e: self.save_project())
+        # Привязка по коду клавиши, а не по букве: так Ctrl+O/P/S работают
+        # и при русской раскладке (дефект D-01)
+        self.root.bind("<Control-KeyPress>", self._on_ctrl_key)
         self.root.bind("<F5>", lambda e: self.start_transcription())
         self.find_entry.bind("<Return>", lambda e: self.find())
         self.tree.bind("<Delete>", lambda e: self.delete_segments())
+
+    def _on_ctrl_key(self, event):
+        actions = {79: self.open_audio, 80: self.open_project, 83: self.save_project}  # O, P, S
+        action = actions.get(event.keycode)
+        if action:
+            action()
+            return "break"
+        return None
 
     # ------------------------------------------------------------------ обновление экрана
 
