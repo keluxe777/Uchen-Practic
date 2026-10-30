@@ -1,0 +1,4 @@
+faster-whisper>=1.1
+# av 15+ несовместима с faster-whisper 1.2 (ошибка metadata_errors)
+av>=11,<15
+python-docx>=1.1
