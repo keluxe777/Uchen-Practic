@@ -11,11 +11,11 @@ from app.audio_utils import LONG_AUDIO_SECONDS, SUPPORTED_EXTENSIONS, AudioFileE
 from app.exporter import ExportError, export_docx, export_srt, export_txt, load_project, save_project, segments_to_text
 from app.history import History
 from app.models import Project, format_time
+from app.paths import data_dir, resource_path
 from app.text_tools import find_segments, get_stats, replace_in_segments
 from app.transcriber import LANGUAGES, MODELS, ModelLoadError, Transcriber, TranscriptionCancelled
 
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(ROOT_DIR, "data")
+DATA_DIR = data_dir()  # в exe — папка data рядом с exe, иначе история терялась бы
 
 AUDIO_FILETYPES = [
     ("Аудиофайлы", " ".join("*" + e for e in SUPPORTED_EXTENSIONS)),
@@ -41,6 +41,10 @@ class App:
         root.geometry("1040x700")
         root.minsize(820, 560)
         root.protocol("WM_DELETE_WINDOW", self.on_close)
+        try:
+            root.iconbitmap(default=resource_path("assets", "icon.ico"))
+        except tk.TclError:
+            pass  # без иконки программа тоже работает
 
         style = ttk.Style()
         if "vista" in style.theme_names():

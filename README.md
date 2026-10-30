@@ -32,6 +32,12 @@ pip install -r requirements.txt
 python main.py
 ```
 
+## Готовая программа (exe)
+
+Python не нужен. Файл `Расшифровщик аудио.exe` и папка `models` должны лежать рядом. В `models` уже лежит модель base, поэтому интернет не нужен. Первый запуск exe занимает 10–20 секунд: программа распаковывается.
+
+Собрать exe самому: `build.bat` (нужны `pip install -r requirements.txt pyinstaller pillow`). Результат появится в папке `dist`.
+
 ## Тесты
 
 ```bash
