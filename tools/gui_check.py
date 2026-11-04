@@ -17,6 +17,7 @@ from app import gui  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SAMPLE = os.path.join(ROOT, "samples", "sample_en.wav")
+SAMPLE_RU = os.path.join(ROOT, "samples", "sample_ru.mp3")
 
 log = []           # что программа показала пользователю
 answers = []       # что «пользователь» ответит на следующие вопросы
@@ -227,6 +228,24 @@ def main():
     check("Проект без аудио открывается, расшифровка выключена",
           app.project.segments and str(app.btn_run["state"]) == "disabled"
           and "не найден" in app.info_label["text"], app.info_label["text"])
+
+    # 15. Русская запись в MP3 с английским вступлением (ТК-18, дефекты D-08, D-09)
+    if os.path.isfile(SAMPLE_RU):
+        next_files.append(SAMPLE_RU)
+        answers.append(False)  # «Не сохранять» текущий проект, если программа спросит
+        app.open_audio()
+        pump(root)
+        app.model_var.set(gui.MODELS["tiny"])
+        app.lang_var.set(gui.LANGUAGES["auto"])
+        app.start_transcription()
+        wait_worker(app, root)
+        segs = app.project.segments
+        status = app.status_label["text"]
+        check("Русский MP3: в статусе русский и английский", "Русский" in status and "английский" in status, status)
+        check("Русский MP3: вступление по-английски", segs and "librivox" in segs[0].text.lower(),
+              [s.text for s in segs[:2]])
+        check("Русский MP3: время не выходит за конец записи",
+              segs and all(s.end <= app.project.duration for s in segs), segs[-1].end if segs else None)
 
     root.destroy()
     shutil.rmtree(tmp, ignore_errors=True)

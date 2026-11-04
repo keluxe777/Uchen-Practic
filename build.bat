@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 cd /d "%~dp0"
-rem Сборка exe. Нужно: pip install -r requirements.txt pyinstaller pillow
+rem Сборка exe. Нужно: pip install --only-binary=av -r requirements.txt pyinstaller pillow
 python tools\make_icon.py
 python -m PyInstaller --noconfirm --clean --onefile --windowed ^
   --name "Расшифровщик аудио" ^

@@ -618,6 +618,9 @@ class App:
             self.history.add(self.project.audio_path, self.project.duration, words, model)
             self.refresh_history()
             lang_name = language_name(lang)
+            others = [language_name(code) for code in getattr(self.transcriber, "languages", []) if code != lang]
+            if others:  # в записи несколько языков (D-09)
+                lang_name += ", есть фрагменты: " + ", ".join(name.lower() for name in others)
             self.set_status(f"Готово: {len(segments)} фрагментов, язык — {lang_name}. "
                             "Проверьте текст и сохраните проект или экспортируйте результат.")
         elif kind == "cancelled":
