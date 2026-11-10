@@ -20,6 +20,8 @@ OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "docs", "screensh
 for name in ("showinfo", "showwarning", "showerror"):
     setattr(gui.messagebox, name, lambda *a, **k: "ok")
 gui.messagebox.askyesno = lambda *a, **k: False
+# Скриншоты для документации — в светлой теме, какая бы тема ни стояла в Windows
+gui.system_theme = lambda: "light"
 
 
 def pump(root, seconds=0.4):
@@ -104,8 +106,8 @@ def main():
     app.theme_var.set(True)
     app.toggle_theme()
     grab(root, "08_dark.png")
-    app.theme_var.set(False)
-    app.toggle_theme()
+    app.auto_theme_var.set(True)  # обратно «Тема как в системе» (здесь — светлая)
+    app.toggle_auto_theme()
 
     app.tabs.select(0)
     root.geometry(f"{app.px(900)}x{app.px(600)}+40+40")

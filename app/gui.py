@@ -15,6 +15,7 @@ from app.history import History
 from app.models import Project, format_time
 from app.paths import data_dir, resource_path
 from app.text_tools import find_segments, get_stats, replace_in_segments
+from app.theme import normalize_mode, resolve_theme, system_theme
 from app.transcriber import LANGUAGES, MODELS, ModelLoadError, Transcriber, TranscriptionCancelled, language_name
 
 try:
@@ -38,6 +39,7 @@ PALETTE = {
              "text_bg": "#232323", "text_fg": "#ececec", "accent": "#60cdff"},
 }
 FONT = "Segoe UI"
+SYSTEM_THEME_CHECK_MS = 2000  # как часто проверять, не сменилась ли тема Windows
 
 
 def enable_dpi_awareness():
@@ -75,7 +77,9 @@ class App:
         except tk.TclError:
             pass  # без иконки программа тоже работает
 
-        self.theme = self.load_settings().get("theme", "light")
+        # Режим темы: auto — как в Windows (по умолчанию), light или dark — выбран вручную
+        self.theme_mode = normalize_mode(self.load_settings().get("theme"))
+        self.theme = resolve_theme(self.theme_mode, system_theme())
         self.style = ttk.Style()
         self.apply_theme(self.theme, first=True)
 
@@ -85,6 +89,7 @@ class App:
         self._bind_keys()
         self.apply_theme(self.theme)
         self.refresh_all()
+        self.root.after(SYSTEM_THEME_CHECK_MS, self._watch_system_theme)
 
     def px(self, value):
         return int(value * self.scale)
@@ -126,10 +131,33 @@ class App:
         for ph in (self.placeholder, self.hist_placeholder):
             ph.configure(background=tree_bg, foreground=c["muted"])
         self.theme_var.set(self.theme == "dark")
+        self.auto_theme_var.set(self.theme_mode == "auto")
+        # Пока тема берётся из системы, переключатель «Тёмная тема» только показывает её
+        self.dark_switch.configure(state="disabled" if self.theme_mode == "auto" else "normal")
 
     def toggle_theme(self):
-        self.apply_theme("dark" if self.theme_var.get() else "light")
-        self.save_settings({"theme": self.theme})
+        """Переключатель «Тёмная тема»: тема выбрана вручную."""
+        self.theme_mode = "dark" if self.theme_var.get() else "light"
+        self.apply_theme(self.theme_mode)
+        self.save_settings({"theme": self.theme_mode})
+
+    def toggle_auto_theme(self):
+        """Переключатель «Как в системе»."""
+        if self.auto_theme_var.get():
+            self.theme_mode = "auto"
+            self.apply_theme(system_theme())
+        else:
+            self.theme_mode = self.theme  # оставляем ту тему, что сейчас на экране
+            self.apply_theme(self.theme)
+        self.save_settings({"theme": self.theme_mode})
+
+    def _watch_system_theme(self):
+        """Тему Windows могут сменить, пока программа открыта, — подстраиваемся."""
+        if self.theme_mode == "auto":
+            current = system_theme()
+            if current != self.theme:
+                self.apply_theme(current)
+        self.root.after(SYSTEM_THEME_CHECK_MS, self._watch_system_theme)
 
     def load_settings(self):
         try:
@@ -191,10 +219,14 @@ class App:
 
         bottom = ttk.Frame(side)
         bottom.pack(side="bottom", fill="x")
+        switch_style = "Switch.TCheckbutton" if sv_ttk else "TCheckbutton"
+        self.auto_theme_var = tk.BooleanVar(value=self.theme_mode == "auto")
+        ttk.Checkbutton(bottom, text="Тема как в системе", variable=self.auto_theme_var,
+                        command=self.toggle_auto_theme, style=switch_style).pack(anchor="w", pady=(0, self.px(6)))
         self.theme_var = tk.BooleanVar(value=self.theme == "dark")
-        ttk.Checkbutton(bottom, text="Тёмная тема", variable=self.theme_var, command=self.toggle_theme,
-                        style="Switch.TCheckbutton" if sv_ttk else "TCheckbutton").pack(anchor="w",
-                                                                                         pady=(0, self.px(10)))
+        self.dark_switch = ttk.Checkbutton(bottom, text="Тёмная тема", variable=self.theme_var,
+                                           command=self.toggle_theme, style=switch_style)
+        self.dark_switch.pack(anchor="w", pady=(0, self.px(10)))
         links = ttk.Frame(bottom)
         links.pack(fill="x")
         ttk.Button(links, text="Справка  F1", command=self.show_help).pack(side="left", fill="x", expand=True)

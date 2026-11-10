@@ -89,6 +89,30 @@ def main():
     check("Кнопки неактивны без файла", str(app.btn_run["state"]) == "disabled"
           and str(app.export_buttons[0]["state"]) == "disabled")
 
+    # 1a. Тема как в системе
+    real_system_theme = gui.system_theme
+    check("По умолчанию тема как в системе", app.theme_mode == "auto" and app.auto_theme_var.get()
+          and app.theme == real_system_theme() and str(app.dark_switch["state"]) == "disabled",
+          (app.theme_mode, app.theme, real_system_theme()))
+    other = "light" if app.theme == "dark" else "dark"
+    gui.system_theme = lambda: other  # в Windows сменили тему, пока программа открыта
+    app._watch_system_theme()
+    check("Смена темы Windows подхватывается на лету", app.theme == other
+          and app.theme_var.get() == (other == "dark"), app.theme)
+    app.auto_theme_var.set(False)
+    app.toggle_auto_theme()
+    check("Без «Как в системе» тема остаётся и переключатель активен", app.theme_mode == other
+          and app.theme == other and str(app.dark_switch["state"]) != "disabled", app.theme_mode)
+    gui.system_theme = lambda: "dark" if other == "light" else "light"
+    app._watch_system_theme()
+    check("Выбранная вручную тема не меняется вслед за Windows", app.theme == other, app.theme)
+    check("Выбор темы сохранён", app.load_settings().get("theme") == other, app.load_settings())
+    gui.system_theme = real_system_theme
+    app.auto_theme_var.set(True)
+    app.toggle_auto_theme()
+    check("Возврат к теме системы", app.theme_mode == "auto" and app.theme == real_system_theme()
+          and app.load_settings().get("theme") == "auto", app.theme)
+
     # 2. Неверные файлы
     txt = os.path.join(tmp, "notes.txt")
     with open(txt, "w") as f:

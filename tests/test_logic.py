@@ -12,6 +12,7 @@ from app.exporter import ExportError, export_docx, export_srt, export_txt, load_
 from app.history import History
 from app.models import Project, Segment, format_time
 from app.text_tools import find_segments, get_stats, replace_in_segments
+from app.theme import normalize_mode, resolve_theme, system_theme
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SAMPLE = os.path.join(ROOT, "samples", "sample_en.wav")
@@ -226,6 +227,25 @@ class HistoryTest(TempDirTest):
         for i in range(40):
             h.add(f"{i}.wav", 1, 1, "base")
         self.assertEqual(len(h.items), 30)
+
+
+class ThemeTest(unittest.TestCase):
+    def test_auto_follows_system(self):
+        self.assertEqual(resolve_theme("auto", "dark"), "dark")
+        self.assertEqual(resolve_theme("auto", "light"), "light")
+
+    def test_manual_ignores_system(self):
+        self.assertEqual(resolve_theme("light", "dark"), "light")
+        self.assertEqual(resolve_theme("dark", "light"), "dark")
+
+    def test_unknown_mode_is_auto(self):
+        # нет настройки или файл настроек испорчен — тема как в системе
+        self.assertEqual(normalize_mode(None), "auto")
+        self.assertEqual(normalize_mode("purple"), "auto")
+        self.assertEqual(resolve_theme(None, "dark"), "dark")
+
+    def test_system_theme_value(self):
+        self.assertIn(system_theme(), ("light", "dark"))
 
 
 if __name__ == "__main__":

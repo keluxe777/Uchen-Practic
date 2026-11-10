@@ -48,8 +48,8 @@ python -m unittest discover -s tests -t .
 python tools/gui_check.py
 ```
 
-- `tests/` — 54 автотеста логики и распознавания.
-- `tools/gui_check.py` — 33 сценарные проверки окна программы.
+- `tests/` — 58 автотестов логики и распознавания.
+- `tools/gui_check.py` — 39 сценарных проверок окна программы.
 - 18 ручных тест-кейсов и журнал дефектов — в `docs/3_Тестирование.docx`.
 - `samples/sample_ru.mp3` — глава «Ивины» из «Детства» Л. Н. Толстого в чтении LibriVox (общественное достояние, Wikimedia Commons): 13 с английского вступления и русская речь.
 
@@ -64,6 +64,7 @@ app/transcriber.py    распознавание речи (faster-whisper)
 app/audio_utils.py    проверка аудиофайла
 app/exporter.py       экспорт TXT/SRT/DOCX, файлы проектов
 app/text_tools.py     поиск, замена, статистика
+app/theme.py          тема оформления: как в Windows, светлая, тёмная
 app/history.py        история расшифровок
 app/models.py         фрагмент, проект, формат времени
 tests/                автотесты
