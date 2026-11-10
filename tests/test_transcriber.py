@@ -137,6 +137,16 @@ class PlanLanguageRunsTest(unittest.TestCase):
         self.assertEqual(plan_language_runs([], "ru", 10.0), [(0.0, 10.0, "ru")])
 
 
+class ModelListTest(unittest.TestCase):
+    def test_models_known_to_library(self):
+        """Каждую модель из списка faster-whisper умеет скачать по имени."""
+        from faster_whisper import available_models
+        from app.transcriber import MODELS
+        self.assertIn("large-v3-turbo", MODELS)
+        for name in MODELS:
+            self.assertIn(name, available_models())
+
+
 class LanguageNameTest(unittest.TestCase):
     def test_known(self):
         self.assertEqual(language_name("ru"), "Русский")
