@@ -3,7 +3,7 @@
 import os
 
 from app.models import Segment
-from app.paths import models_dir
+from app.paths import bundled_models_dirs, models_dir
 
 # Модели от быстрой и простой к медленной и точной.
 # На слабом ноутбуке без видеокарты лучше всего подходят tiny и base.
@@ -121,10 +121,11 @@ class Transcriber:
             from faster_whisper import WhisperModel
             # Если модель уже лежит рядом с программой (models/base) — берём её, интернет не нужен
             source = name
-            if models_dir():
-                local = os.path.join(models_dir(), name)
-                if os.path.isfile(os.path.join(local, "model.bin")):
+            for folder in (*bundled_models_dirs(), models_dir()):
+                local = os.path.join(folder, name) if folder else ""
+                if local and os.path.isfile(os.path.join(local, "model.bin")):
                     source = local
+                    break
             # int8 на процессоре — быстро и экономно по памяти
             self._model = WhisperModel(source, device="cpu", compute_type="int8",
                                        download_root=models_dir())

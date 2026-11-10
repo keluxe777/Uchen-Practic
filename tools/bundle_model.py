@@ -1,8 +1,9 @@
-"""Кладёт модель распознавания в dist/models/<имя> рядом с exe: python tools/bundle_model.py base
+"""Кладёт модель распознавания в папку программы рядом с exe:
+python tools/bundle_model.py base   →   dist/Расшифровщик аудио/models/base
 
-Тогда exe работает без интернета на любом компьютере — достаточно скопировать
-exe вместе с папкой models. Файлы копируются обычными файлами (без ярлыков
-кэша Hugging Face), чтобы папку можно было спокойно переносить и архивировать.
+Установщик забирает её вместе с exe, и программа работает без интернета на любом
+компьютере. Файлы копируются обычными файлами (без ярлыков кэша Hugging Face),
+чтобы папку можно было спокойно переносить и архивировать.
 """
 
 import os
@@ -10,11 +11,14 @@ import shutil
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+
+from app import APP_NAME  # noqa: E402  имя папки программы, как у exe
 
 
 def main():
     name = sys.argv[1] if len(sys.argv) > 1 else "base"
-    models = os.path.join(ROOT, "dist", "models")
+    models = os.path.join(ROOT, "dist", APP_NAME, "models")
     target = os.path.join(models, name)
     from faster_whisper.utils import download_model
     snapshot = download_model(name)  # скачивает в общий кэш или берёт оттуда

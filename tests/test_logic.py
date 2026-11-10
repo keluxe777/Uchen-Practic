@@ -229,6 +229,47 @@ class HistoryTest(TempDirTest):
         self.assertEqual(len(h.items), 30)
 
 
+class PathsTest(TempDirTest):
+    """Где exe хранит историю и модели (установка в Program Files)."""
+
+    def frozen(self, writable, onefile=False):
+        from unittest import mock
+        from app import paths
+        return mock.patch.multiple(paths, is_frozen=lambda: True, app_dir=lambda: self.tmp,
+                                   is_writable=lambda folder: writable, is_onefile=lambda: onefile)
+
+    def test_writable_install_keeps_data_next_to_exe(self):
+        from app import paths
+        with self.frozen(writable=True):
+            self.assertEqual(paths.data_dir(), os.path.join(self.tmp, "data"))
+            self.assertEqual(paths.models_dir(), os.path.join(self.tmp, "models"))
+
+    def test_read_only_install_uses_user_folder(self):
+        from app import paths
+        with self.frozen(writable=False):
+            self.assertEqual(paths.data_dir(), os.path.join(paths.user_dir(), "data"))
+            self.assertEqual(paths.models_dir(), os.path.join(paths.user_dir(), "models"))
+            # модель из установщика всё равно берётся из папки программы
+            self.assertIn(os.path.join(self.tmp, "models"), paths.bundled_models_dirs())
+
+    def test_onefile_uses_user_folder(self):
+        # exe одним файлом не мусорит в папке, откуда его запустили (например, «Загрузки»)
+        from app import paths
+        with self.frozen(writable=True, onefile=True):
+            self.assertEqual(paths.data_dir(), os.path.join(paths.user_dir(), "data"))
+            self.assertEqual(paths.models_dir(), os.path.join(paths.user_dir(), "models"))
+
+    def test_is_writable(self):
+        from app.paths import is_writable
+        new = os.path.join(self.tmp, "new", "deeper")
+        self.assertTrue(is_writable(new))
+        self.assertFalse(os.path.exists(new))  # проверка не создаёт папок
+        file_path = os.path.join(self.tmp, "file.txt")
+        with open(file_path, "w") as f:
+            f.write("x")
+        self.assertFalse(is_writable(os.path.join(file_path, "sub")))  # внутри файла папку не создать
+
+
 class ThemeTest(unittest.TestCase):
     def test_auto_follows_system(self):
         self.assertEqual(resolve_theme("auto", "dark"), "dark")
